@@ -1,0 +1,8 @@
+TIMESTAMP,Sleep_Stage,Obstructive_Apnea,Central_Apnea,Hypopnea
+0.000000,W,0,0,0
+0.015625,N1,0,0,0
+0.031250,N2,1,0,0
+0.046875,N2,1,0,0
+0.062500,N2,0,0,0
+0.078125,N3,0,0,1
+0.093750,W,0,0,0
