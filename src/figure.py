@@ -1,0 +1,42 @@
+import sys
+import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+COLONNES = {"subject", "rem_events_per_hour", "nrem_events_per_hour"}
+
+
+def charger(chemin_csv):
+    df = pd.read_csv(chemin_csv)
+    manque = COLONNES - set(df.columns)
+    if manque:
+        raise ValueError(f"Colonnes manquantes : {sorted(manque)}")
+    return df
+
+
+def tracer(df, sortie="figures/figure.png"):
+    x = list(range(len(df)))
+    largeur = 0.4
+    plt.figure(figsize=(8, 5))
+    plt.bar([i - largeur / 2 for i in x], df["nrem_events_per_hour"],
+            largeur, label="NREM", color="steelblue")
+    plt.bar([i + largeur / 2 for i in x], df["rem_events_per_hour"],
+            largeur, label="REM", color="tomato")
+    plt.xticks(x, df["subject"])
+    plt.xlabel("Sujet")
+    plt.ylabel("Événements respiratoires par heure")
+    plt.title("Événements respiratoires : REM vs NREM")
+    plt.legend()
+    plt.savefig(sortie, dpi=150, bbox_inches="tight")
+    plt.close()
+    return sortie
+
+
+def main(chemin_csv, sortie="figures/figure.png"):
+    df = charger(chemin_csv)
+    print("Figure enregistrée :", tracer(df, sortie))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])
