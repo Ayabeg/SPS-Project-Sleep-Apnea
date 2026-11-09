@@ -1,5 +1,0 @@
-data/raw/*
-!data/raw/.gitkeep
-data/filtered/
-*_whole_df.csv
-*.save
