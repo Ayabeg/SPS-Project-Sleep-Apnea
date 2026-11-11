@@ -1,73 +1,118 @@
-#!/usr/bin/env bash
-# PARTIE SCRIPT : enveloppe du pipeline (options, erreurs, signaux, codes de retour).
-# Le traitement des données se fait dans scripts/ : ici on ne fait que les appeler.
-set -Eeuo pipefail                     # arrêt à la première erreur
 
-RAW="data/raw" #le dossier où se trouvent les cvs
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# Se placer à la racine du projet
+cd "$(dirname "$0")"
+
+RAW="data/raw"
 OUT="results"
 LOGS="logs"
 TMP=$(mktemp -d)
 
-# --- Fonctions réutilisées ---------------------------------------------------
-usage() { echo "Usage: $0 [-d dossier_csv] [-o dossier_resultats] [-h]"; }
+usage() {
+    echo "Usage: $0 [-d dossier_csv] [-o dossier_resultats] [-h]"
+}
 
 log() {
-  mkdir -p "$LOGS"
-  echo "$(date '+%F %T') $*" | tee -a "$LOGS/run.log"
+    mkdir -p "$LOGS"
+    echo "$(date '+%F %T') $*" | tee -a "$LOGS/run.log"
 }
 
 die() {
-  log "ERREUR: $*"
-  exit 1
+    log "ERREUR : $*"
+    exit 1
 }
 
-check_file() { [[ -f "$1" ]] || die "fichier manquant : $1"; }
-
-cleanup() { rm -rf "$TMP"; }
+cleanup() {
+    rm -rf "$TMP"
+}
 
 on_interrupt() {
-  log "interruption : nettoyage"
-  cleanup
-  exit 130
+    log "Interruption du pipeline"
+    exit 130
 }
 
-# --- Erreurs et signaux ------------------------------------------------------
-trap 'die "échec ligne $LINENO : $BASH_COMMAND"' ERR   # message clair
-trap cleanup EXIT                                      # temporaires supprimés à la fin
-trap on_interrupt INT TERM                             # ... et à l'interruption
+trap cleanup EXIT
+trap on_interrupt INT TERM
+trap 'die "Echec ligne $LINENO : $BASH_COMMAND"' ERR
 
-# --- Options (getopts) -------------------------------------------------------
-while getopts "d:o:h" opt; do
-  case "$opt" in
-    d) RAW=$OPTARG ;;
-    o) OUT=$OPTARG ;;
-    h) usage; exit 0 ;;
-    *) usage; exit 2 ;;
-  esac
+while getopts ":d:o:h" opt; do
+    case "$opt" in
+        d) RAW="$OPTARG" ;;
+        o) OUT="$OPTARG" ;;
+        h) usage; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
 done
 
-# --- Préparation -------------------------------------------------------------
-check_file "scripts/filtrer_phases_sommeil.sh"
-mkdir -p "$OUT"                        # relance possible : rien à nettoyer avant
+mkdir -p "$OUT" "$LOGS" figures
 
-shopt -s nullglob
-files=("$RAW"/S*_whole_df.csv)
-[[ ${#files[@]} -gt 0 ]] || die "aucun CSV trouvé dans $RAW"
+log "===== DEBUT DU PIPELINE ====="
 
-# --- Appel de la partie Shell, patient par patient ---------------------------
-for csv in "${files[@]}"; do
-  id=$(basename "$csv" _whole_df.csv)
-  log "traitement de $id"
-  bash scripts/filtrer_phases_sommeil.sh -f "$csv" -o "$TMP/$id.csv"
-  mv "$TMP/$id.csv" "$OUT/$id.csv"     # le résultat n'apparaît que s'il est complet
-done
-
-# --- Appel de la partie Python (si elle existe déjà) -------------------------
-if [[ -f src/analyse.py ]]; then
-  log "analyse Python"
-  python3 src/analyse.py --results "$OUT"
+# 1. Téléchargement et vérification SHA256
+if [[ "$RAW" == "data/raw" ]]; then
+    log "Téléchargement et vérification des données"
+    bash scripts/telecharger_donnees.sh
 else
-  log "analyse.py absent : étape ignorée"
+    log "Dossier personnalisé : téléchargement ignoré"
 fi
 
-log "terminé"
+# 2. Recherche des fichiers CSV
+shopt -s nullglob
+files=("$RAW"/S*_whole_df.csv)
+
+[[ ${#files[@]} -gt 0 ]] ||
+    die "Aucun fichier CSV trouvé dans $RAW"
+
+# 3. Filtrage Shell
+log "Début du filtrage Shell"
+mkdir -p "$OUT/filtered"
+
+for csv in "${files[@]}"; do
+    id=$(basename "$csv" _whole_df.csv)
+    log "Filtrage de $id"
+
+    bash scripts/filtrer_phases_sommeil.sh \
+        -f "$csv" \
+        -o "$TMP/$id.csv"
+
+    mv "$TMP/$id.csv" "$OUT/filtered/$id.csv"
+done
+
+log "Filtrage terminé"
+
+# 4. Analyse Python des CSV bruts
+log "Début de l'analyse Python"
+
+subjects=()
+for csv in "${files[@]}"; do
+    id=$(basename "$csv" _whole_df.csv)
+    subjects+=("$id")
+done
+
+python3 src/analyse.py \
+    --input-dir "$RAW" \
+    --subjects "${subjects[@]}" \
+    --output-dir "$OUT"
+
+log "Analyse Python terminée"
+
+# 5. Génération de la figure
+log "Génération du graphique"
+
+python3 src/figure.py "$OUT/all_subjects_results.csv"
+
+log "Graphique généré"
+
+# 6. Archivage
+if [[ "$OUT" == "results" ]]; then
+    log "Archivage des résultats"
+    bash scripts/archiver_resultats.sh
+    log "Archivage terminé"
+else
+    log "Archivage ignoré : dossier de sortie personnalisé"
+fi
+
+log "===== PIPELINE TERMINE AVEC SUCCES ====="
+
