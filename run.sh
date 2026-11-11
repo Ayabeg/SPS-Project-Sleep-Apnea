@@ -3,7 +3,7 @@
 # Le traitement des données se fait dans scripts/ : ici on ne fait que les appeler.
 set -Eeuo pipefail                     # arrêt à la première erreur
 
-RAW="data" #le dossier où se trouvent les cvs
+RAW="data/raw" #le dossier où se trouvent les cvs
 OUT="results"
 LOGS="logs"
 TMP=$(mktemp -d)
