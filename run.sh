@@ -63,9 +63,9 @@ for csv in "${files[@]}"; do
 done
 
 # --- Appel de la partie Python (si elle existe déjà) -------------------------
-if [[ -f scripts/analyse.py ]]; then
+if [[ -f src/analyse.py ]]; then
   log "analyse Python"
-  python3 scripts/analyse.py --results "$OUT"
+  python3 src/analyse.py --results "$OUT"
 else
   log "analyse.py absent : étape ignorée"
 fi
