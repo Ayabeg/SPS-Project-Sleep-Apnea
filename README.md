@@ -1,6 +1,6 @@
-SPS Project — Sleep Apnea Analysis
+# SPS Project — Sleep Apnea Analysis
 
-1. Présentation
+## 1. Présentation
 
 Ce projet étudie les événements d'apnée du sommeil selon les phases REM et NREM. Il repose sur un pipeline automatisé utilisant Bash et Python.
 
@@ -8,7 +8,7 @@ Question de recherche : La fréquence des événements respiratoires (apnées et
 phases du sommeil, notamment entre le sommeil paradoxal (REM) et le sommeil non
 paradoxal (NREM) ?
 
-2. Jeu de données
+## 2. Jeu de données
 
 Nom : DREAMT (PhysioNet)
 
@@ -18,7 +18,7 @@ Taille : Sujets S002, S003, S004, S005, S006, S007, S008,taille totale mesurée 
 
 Date du téléchargement : 23 Octobre 2026
 
-3. Organisation du projet
+## 3. Organisation du projet
 
 data/ : données brutes
 
@@ -40,13 +40,13 @@ requirements.txt : dépendances Python
 
 SOURCES.md : provenance des données
 
-4. Installation
+## 4. Installation
 
-5. Exécution
+## 5. Exécution
 
 bash run.sh -h
 bash run.sh
 
-6. Résultats produits
+## 6. Résultats produits
 
-7. Vérification et archivage
+## 7. Vérification et archivage
