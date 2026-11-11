@@ -2,23 +2,63 @@
 
 ## Dataset principal
 
-- Nom : DREAMT 
-- Version: 2.1.0
-- Source : PhysioNet
-- URL : https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz
-- Date de téléchargement : 23 Octobre 2026
-- Taille du téléchargement : Sujets S002, S003, S004, S005, S006, S007, S008, taille totale mesurée : 986MO
-- Format : CSV
-
+- **Nom :** DREAMT
+- **Version :** 2.1.0
+- **Source :** PhysioNet
+- **Téléchargement des fichiers CSV :** https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz
+- **Date de téléchargement :** 23 octobre 2026
+- **Sujets sélectionnés :** S002 à S008 (7 sujets)
+- **Taille totale :** 986 Mo
+- **Format :** CSV
 
 ## Description
 
-Ce jeu de données est utilisé pour étudier
-les événements d'apnée pendant les phases
-REM et NREM du sommeil.
+Le jeu de données DREAMT contient des enregistrements liés au sommeil.
 
-## Intégrité
+Dans ce projet, sept sujets sont sélectionnés afin d'étudier les événements respiratoires, notamment les apnées obstructives, les apnées centrales et les hypopnées, selon les phases REM et NREM.
 
-- Algorithme : SHA-256
-//- Empreinte de référence : [valeur vérifiée]
-- Méthode de vérification : sha256sum -c
+## Acquisition des données
+
+Le téléchargement est assuré par `scripts/telecharger_donnees.sh`.
+
+Pour récupérer ou vérifier les sept sujets :
+
+```bash
+bash scripts/telecharger_donnees.sh
+```
+
+Pour sélectionner un sujet ( par exemple le sujet n°2 ) :
+
+```bash
+bash scripts/telecharger_donnees.sh -s S002
+```
+
+Les fichiers bruts sont enregistrés dans `data/raw/`.
+
+## Intégrité des fichiers
+
+L'algorithme SHA-256 permet de contrôler l'intégrité des fichiers.
+
+Les empreintes des sept fichiers sont enregistrées dans :
+
+`data/checksums/SHA256SUMS`
+
+Vérification manuelle :
+
+```bash
+cd data/raw
+sha256sum -c ../checksums/SHA256SUMS
+cd ../..
+```
+
+Une ligne `OK` signifie que le fichier correspond à l'empreinte enregistrée.
+
+## Protection des données
+
+Après téléchargement et vérification, le script applique des permissions de lecture seule aux fichiers bruts avec `chmod 444`.
+
+Cette mesure réduit les risques de modification accidentelle des données originales.
+
+## Reproductibilité
+
+Les fichiers CSV bruts ne sont pas inclus dans le dépôt GitHub. Ils peuvent être récupérés à partir de leur source grâce au script de téléchargement.
