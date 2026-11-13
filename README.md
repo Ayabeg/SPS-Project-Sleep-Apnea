@@ -48,16 +48,13 @@ Les répertoires de sortie peuvent être créés lors de l'exécution et ne sont
 
 ## 4. Répartition du travail
 
-La répartition ci-dessous est basée sur l'historique des contributions Git du
-dépôt. Les noms officiels peuvent être ajustés par le groupe avant la remise.
-
-| Contributeur | Travail principal |
-|---|---|
-| Ayabeg | Mise en place du dépôt GitHub et développement du script Python. |
-| linadd2000-star | Première version du script principal `run.sh` |
-| kenzbn | Téléchargement et filtrage des données avec les scripts Bash |
-| aminabenzerga819-commits | Génération de la figure et tests associés |
-| Besma Hamzaoui (`besmahmz` / `vboxuser`) | Documentation, sources, intégration des chemins, archivage et validation |
+| Membre | Compte GitHub | Travail principal |
+|---|---|---|
+| BEGHANEM Aya | `Ayabeg` | Mise en place du dépôt GitHub, développement de l'analyse Python, corrections de portabilité et intégration continue |
+| DOUALI Anaïs Lina | `linadd2000-star` | Script principal `run.sh` |
+| BOUNDAOUI Kenza | `kenzbn` | Téléchargement, vérification d'intégrité et filtrage des données (scripts Bash) |
+| BENZERGA Amina | `aminabenzerga819-commits` | Génération de la figure et tests associés |
+| HAMZAOUI Basma | `besmahmz` / `vboxuser` | Documentation, sources, intégration des chemins, archivage et validation |
 
 
 ## 5. Installation
@@ -66,7 +63,7 @@ dépôt. Les noms officiels peuvent être ajustés par le groupe avant la remise
 
 - Linux (Ubuntu recommandé)
 - Bash et outils système : `curl`, `awk`, `sha256sum`, `tar`, `gzip`
-- Python 3.11 à 3.13, pip et venv
+- Python 3.11 ou plus, pip et venv (sous Ubuntu 22.04 : paquets `python3.11` et `python3.11-venv`)
 - cron (pour la planification automatique)
 
 Le pipeline n'est pas prévu pour une exécution native sous Windows. Windows
@@ -82,10 +79,24 @@ git clone https://github.com/Ayabeg/SPS-Project-Sleep-Apnea.git
 cd SPS-Project-Sleep-Apnea
 ```
 
-Créer et activer l'environnement virtuel, puis installer les dépendances :
+Vérifier la version de Python (3.11 ou plus est nécessaire) :
 
 ```bash
-python3 -m venv .venv
+python3 --version
+```
+
+Si la version est inférieure à 3.11 (par exemple Python 3.10 sous Ubuntu 22.04),
+installer Python 3.11 :
+
+```bash
+sudo apt install python3.11 python3.11-venv
+```
+
+Créer et activer l'environnement virtuel avec Python 3.11 (ou avec `python3`
+si sa version est déjà 3.11 ou plus), puis installer les dépendances :
+
+```bash
+python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
@@ -104,7 +115,7 @@ Lancer le pipeline complet :
 Le script réalise successivement :
 
 1. Le téléchargement et la vérification SHA256 des fichiers CSV.
-2. Le filtrage des données avec le parseur CSV Python appelé par le script Bash.
+2. Le filtrage des données en Bash, par le tube `tr | awk | cut | awk`.
 3. L'analyse des événements respiratoires sur les fichiers filtrés avec Python.
 4. La génération du graphique comparatif REM/NREM.
 5. L'archivage des résultats et des figures.
@@ -216,10 +227,10 @@ Python 3.11, 3.12 et 3.13. Le pipeline complet nécessite le téléchargement de
 sept fichiers DREAMT et doit être validé séparément sur une machine disposant
 de suffisamment d'espace disque.
 
-Une validation manuelle a également été effectuée dans un environnement Linux
-avec Python 3.14 : les 7 fichiers ont été téléchargés et vérifiés, les 9 tests
-ont réussi, le pipeline complet a terminé sans erreur et la figure ainsi que
-l'archive des résultats ont été générées.
+Une validation manuelle a également été effectuée le 13 novembre 2026 sous
+Ubuntu 22.04 avec Python 3.11 : les 7 fichiers ont été téléchargés et vérifiés,
+les 13 tests ont réussi, le pipeline complet a terminé sans erreur et la figure
+ainsi que l'archive des résultats ont été générées.
 
 ## 10. Limites
 
