@@ -53,12 +53,12 @@ dépôt. Les noms officiels peuvent être ajustés par le groupe avant la remise
 
 | Contributeur | Travail principal |
 |---|---|
-| Ayabeg | Création et coordination du dépôt GitHub |
+| Ayabeg | Mise en place du dépôt GitHub et développement du script Python. |
 | linadd2000-star | Première version du script principal `run.sh` |
 | kenzbn | Téléchargement et filtrage des données avec les scripts Bash |
 | aminabenzerga819-commits | Génération de la figure et tests associés |
 | Besma Hamzaoui (`besmahmz` / `vboxuser`) | Documentation, sources, intégration des chemins, archivage et validation |
-| Mohamed Beghanem | Corrections finales de portabilité, tests et intégration CI |
+| Ayabeg| Corrections finales de portabilité, tests et intégration CI |
 
 ## 5. Installation
 
