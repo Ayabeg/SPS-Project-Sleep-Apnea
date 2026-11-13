@@ -2,7 +2,7 @@
 
 ## Dataset principal
 
-- **Nom :** DREAMT
+- **Nom :** DREAMT (HugginG Face)
 - **Version :** 2.1.0
 - **Source originale :** PhysioNet
 - **Miroir utilisé pour le téléchargement :** https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz
