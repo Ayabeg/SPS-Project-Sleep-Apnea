@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from analyse import frequency_per_hour, is_marked, analyze_csv
 
@@ -62,3 +64,55 @@ def test_colonne_manquante(tmp_path):
     fichier.write_text("TIMESTAMP,Sleep_Stage\n0,R\n1,R\n")
     with pytest.raises(ValueError):
         analyze_csv(fichier)
+
+
+def test_timestamps_irreguliers_refuses(tmp_path):
+    fichier = tmp_path / "irregulier.csv"
+    fichier.write_text(
+        EN_TETE
+        + "0,R,0,0,0,0\n"
+        + "1,R,1,0,0,0\n"
+        + "3,R,0,0,0,0\n"
+    )
+
+    with pytest.raises(ValueError, match="régulièrement échantillonnés"):
+        analyze_csv(fichier)
+
+
+def test_multiple_events_est_un_type_annote_et_total_est_une_union(tmp_path):
+    fichier = tmp_path / "multiple.csv"
+    fichier.write_text(
+        EN_TETE
+        + "0,R,0,0,0,1\n"
+        + "1,R,0,0,0,1\n"
+        + "2,R,1,0,0,1\n"
+        + "3,R,0,0,0,0\n"
+    )
+
+    rapport = analyze_csv(fichier)
+
+    assert rapport["total_event_episodes_by_phase"] == {"REM": 1, "NREM": 0}
+    assert rapport["event_episode_counts_by_phase"]["Multiple_Events"] == {
+        "REM": 1,
+        "NREM": 0,
+    }
+    assert rapport["event_episode_counts_by_phase"]["Obstructive_Apnea"] == {
+        "REM": 1,
+        "NREM": 0,
+    }
+
+
+def test_fixtures_match_documented_episode_counts():
+    fixture_dir = Path(__file__).parents[1] / "data" / "exemple"
+    expected = {
+        "exemple_filtre.csv": (2, 5),
+        "exemple_sans_evenement.csv": (0, 0),
+        "exemple_sans_rem.csv": (0, 2),
+    }
+
+    for filename, counts in expected.items():
+        rapport = analyze_csv(fixture_dir / filename)
+        assert (
+            rapport["total_event_episodes_by_phase"]["REM"],
+            rapport["total_event_episodes_by_phase"]["NREM"],
+        ) == counts

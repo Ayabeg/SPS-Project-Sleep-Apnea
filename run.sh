@@ -4,6 +4,7 @@ set -Eeuo pipefail
 
 # Se placer à la racine du projet
 cd "$(dirname "$0")"
+PROJECT_DIR="$(pwd -P)"
 
 RAW="data/raw"
 OUT="results"
@@ -52,14 +53,23 @@ while getopts ":d:o:h" opt; do
     esac
 done
 
+# Normalize paths so equivalent spellings such as ./data/raw and an absolute
+# data/raw path behave identically.
+RAW="$(realpath -m "$RAW")"
+OUT="$(realpath -m "$OUT")"
+LOGS="$(realpath -m "$LOGS")"
+DEFAULT_RAW="$PROJECT_DIR/data/raw"
+
 mkdir -p "$OUT" "$LOGS" figures
 
 log "===== DEBUT DU PIPELINE ====="
 
 # 1. Téléchargement et vérification SHA256
-if [[ "$RAW" == "data/raw" ]]; then
+if [[ "$RAW" == "$DEFAULT_RAW" ]]; then
     log "Téléchargement et vérification des données"
-    bash scripts/telecharger_donnees.sh
+    bash scripts/telecharger_donnees.sh \
+        -o "$RAW" \
+        -c "$PROJECT_DIR/data/checksums/SHA256SUMS"
 else
     log "Dossier personnalisé : téléchargement ignoré"
 fi
@@ -88,7 +98,7 @@ done
 
 log "Filtrage terminé"
 
-# 4. Analyse Python des CSV bruts
+# 4. Analyse Python des fichiers filtrés
 log "Début de l'analyse Python"
 
 subjects=()
@@ -98,8 +108,9 @@ for csv in "${files[@]}"; do
 done
 
 "$PYTHON" src/analyse.py \
-    --input-dir "$RAW" \
+    --input-dir "$OUT/filtered" \
     --subjects "${subjects[@]}" \
+    --file-suffix ".csv" \
     --output-dir "$OUT"
 
 log "Analyse Python terminée"
@@ -107,12 +118,17 @@ log "Analyse Python terminée"
 # 5. Génération de la figure
 log "Génération du graphique"
 
-"$PYTHON" src/figure.py "$OUT/all_subjects_results.csv"
+if [[ "$OUT" == "$PROJECT_DIR/results" ]]; then
+    FIGURE="$PROJECT_DIR/figures/figure.png"
+else
+    FIGURE="$OUT/figure.png"
+fi
+"$PYTHON" src/figure.py "$OUT/all_subjects_results.csv" "$FIGURE"
 
 log "Graphique généré"
 
 # 6. Archivage
-if [[ "$OUT" == "results" ]]; then
+if [[ "$OUT" == "$PROJECT_DIR/results" ]]; then
     log "Archivage des résultats"
     bash scripts/archiver_resultats.sh
     log "Archivage terminé"

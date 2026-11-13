@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
@@ -66,6 +67,11 @@ def parse_args() -> argparse.Namespace:
         help="Subject labels for directory mode. Defaults to S002 through S008.",
     )
     parser.add_argument(
+        "--file-suffix",
+        default="_whole_df.csv",
+        help="Filename suffix used in directory mode (default: _whole_df.csv).",
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path("results"),
@@ -123,11 +129,25 @@ def analyze_csv(input_path: Path) -> dict[str, Any]:
         for row in reader:
             row_count += 1
 
-            timestamp = float(row["TIMESTAMP"])
+            try:
+                timestamp = float(row["TIMESTAMP"])
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid TIMESTAMP at CSV row {row_count + 1}: {row['TIMESTAMP']!r}"
+                ) from exc
+            if not math.isfinite(timestamp):
+                raise ValueError(
+                    f"TIMESTAMP must be finite at CSV row {row_count + 1}: {timestamp!r}"
+                )
             if timestamp_first is None:
                 timestamp_first = timestamp
             if previous_timestamp is not None:
-                step = round(timestamp - previous_timestamp, 6)
+                step = round(timestamp - previous_timestamp, 9)
+                if step <= 0:
+                    raise ValueError(
+                        "TIMESTAMP values must be strictly increasing; "
+                        f"invalid step {step} at CSV row {row_count + 1}."
+                    )
                 timestamp_step_counts[step] += 1
             previous_timestamp = timestamp
             timestamp_last = timestamp
@@ -165,6 +185,17 @@ def analyze_csv(input_path: Path) -> dict[str, Any]:
         raise ValueError("The CSV does not contain enough timestamps to measure time.")
 
     sample_interval = timestamp_step_counts.most_common(1)[0][0]
+    irregular_steps = [
+        step
+        for step in timestamp_step_counts
+        if not math.isclose(step, sample_interval, rel_tol=1e-6, abs_tol=1e-9)
+    ]
+    if irregular_steps:
+        observed = sorted(timestamp_step_counts)
+        raise ValueError(
+            "TIMESTAMP values are not regularly sampled; "
+            f"observed intervals: {observed}."
+        )
     phase_seconds = {
         phase: round(sleep_phase_row_counts[phase] * sample_interval, 6)
         for phase in PHASES
@@ -199,6 +230,10 @@ def analyze_csv(input_path: Path) -> dict[str, Any]:
         "timestamp_first": timestamp_first,
         "timestamp_last": timestamp_last,
         "timestamp_step_seconds": sample_interval,
+        "event_count_definition": (
+            "Unique contiguous episodes in the union of the annotated event columns; "
+            "per-column episode counts are reported independently."
+        ),
     }
 
 
@@ -294,12 +329,17 @@ def run_single_subject(
     return make_result_row(subject, report)
 
 
-def run_batch(input_dir: Path, subjects: list[str], output_dir: Path) -> None:
+def run_batch(
+    input_dir: Path,
+    subjects: list[str],
+    output_dir: Path,
+    file_suffix: str = "_whole_df.csv",
+) -> None:
     """Analyze several subjects and save a combined comparison table."""
     result_rows: list[dict[str, Any]] = []
 
     for subject in subjects:
-        input_path = input_dir / f"{subject}_whole_df.csv"
+        input_path = input_dir / f"{subject}{file_suffix}"
         if not input_path.is_file():
             raise FileNotFoundError(f"Input file does not exist: {input_path}")
         result_rows.append(run_single_subject(input_path, subject, output_dir))
@@ -320,7 +360,7 @@ def main() -> None:
     else:
         if args.subject:
             raise SystemExit("Do not use --subject together with --input-dir; use --subjects instead.")
-        run_batch(args.input_dir, args.subjects, args.output_dir)
+        run_batch(args.input_dir, args.subjects, args.output_dir, args.file_suffix)
 
 
 if __name__ == "__main__":

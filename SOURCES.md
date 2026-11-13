@@ -6,6 +6,7 @@
 - **Version :** 2.1.0
 - **Source originale :** PhysioNet
 - **Miroir utilisé pour le téléchargement :** https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz
+- **Révision du miroir utilisée par le pipeline :** `ab79e53dd135c69da9e70de33503150c3d4cdc57`
 - **Date de téléchargement :** 23 octobre 2026
 - **Sujets sélectionnés :** S002 à S008 (7 sujets)
 - **Taille totale :** 986 Mo
@@ -13,6 +14,9 @@
 
 Le dépôt utilise le miroir Hugging Face pour automatiser le téléchargement,
 tandis que DREAMT est documenté comme le jeu de données d'origine PhysioNet.
+Le dataset est distribué sous la licence PhysioNet Restricted Health Data
+License 1.5.0. Les utilisateurs doivent disposer des autorisations nécessaires
+et ne doivent pas redistribuer les fichiers bruts.
 
 ## Description
 

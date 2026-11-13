@@ -1,12 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # telecharger_donnees.sh
 # Télécharge les fichiers DREAMT (64 Hz) et vérifie leur intégrité (SHA-256).
 # Un fichier déjà présent et intact n'est pas retéléchargé : on peut relancer sans nettoyer.
 # Exemple : bash scripts/telecharger_donnees.sh -s S002 -s S003
 
-set -o pipefail
+set -Eeuo pipefail
 
-URL_BASE="https://huggingface.co/datasets/bsaenz/dreamt/resolve/main/data_64Hz"
+# Pin the upstream dataset revision so a mutable branch cannot silently change
+# the source behind the recorded checksums.
+DATASET_REVISION="ab79e53dd135c69da9e70de33503150c3d4cdc57"
+URL_BASE="https://huggingface.co/datasets/bsaenz/dreamt/resolve/$DATASET_REVISION/data_64Hz"
 DOSSIER="data/raw"
 SOMMES="data/checksums/SHA256SUMS"
 SUJETS=()
@@ -41,7 +44,11 @@ nettoyer() {
 # Renvoie 0 si le fichier correspond à sa somme de référence
 verifier() {
     local nom="$1"
-    ( cd "$DOSSIER" && grep " ${nom}\$" "$SOMMES_ABS" | sha256sum -c --quiet - ) >/dev/null 2>&1
+    local ligne
+    ligne="$(awk -v fichier="$nom" '$2 == fichier { print; exit }' "$SOMMES_ABS")" || return 1
+    [ -n "$ligne" ] || return 1
+    printf '%s\n' "$ligne" |
+        ( cd "$DOSSIER" && sha256sum -c --quiet - ) >/dev/null 2>&1
 }
 
 telecharger_sujet() {
@@ -49,9 +56,12 @@ telecharger_sujet() {
     local nom="${sujet}_whole_df.csv"
     local cible="$DOSSIER/$nom"
 
-    grep -q " ${nom}\$" "$SOMMES" || erreur "pas de somme de contrôle pour $nom dans $SOMMES"
+    if ! awk -v fichier="$nom" '$2 == fichier { found = 1; exit } END { exit !found }' "$SOMMES"; then
+        erreur "pas de somme de contrôle pour $nom dans $SOMMES"
+    fi
 
     if [ -f "$cible" ] && verifier "$nom"; then
+        chmod 444 "$cible"
         echo "-> $sujet : déjà présent et intact"
         return 0
     fi
@@ -64,7 +74,8 @@ telecharger_sujet() {
     # Téléchargement dans un fichier .part, renommé seulement s'il est complet
     echo "-> $sujet : téléchargement de $URL_BASE/$nom"
     TEMP="$cible.part"
-    if ! curl -fL --retry 3 --progress-bar -o "$TEMP" "$URL_BASE/$nom"; then
+    if ! curl -fL --proto '=https' --proto-redir '=https' \
+        --retry 3 --progress-bar -o "$TEMP" "$URL_BASE/$nom"; then
         nettoyer
         erreur "échec du téléchargement de $nom (connexion ou adresse ?)" 3
     fi
@@ -99,6 +110,15 @@ done
 if [ "${#SUJETS[@]}" -eq 0 ]; then
     SUJETS=(S002 S003 S004 S005 S006 S007 S008)
 fi
+
+case "$URL_BASE" in
+    https://*) ;;
+    *) erreur "l'URL doit utiliser HTTPS" ;;
+esac
+
+for s in "${SUJETS[@]}"; do
+    [[ "$s" =~ ^S[0-9]{3}$ ]] || erreur "sujet invalide : $s (format attendu : S###)"
+done
 
 command -v curl >/dev/null      || erreur "la commande curl n'est pas installée"
 command -v sha256sum >/dev/null || erreur "la commande sha256sum n'est pas installée"

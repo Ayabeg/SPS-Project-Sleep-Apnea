@@ -1,6 +1,6 @@
 import os
-import sys
 import tempfile
+import argparse
 from pathlib import Path
 
 # Keep Matplotlib's cache out of the user's home directory.  This also makes
@@ -27,6 +27,7 @@ def charger(chemin_csv):
 
 
 def tracer(df, sortie="figures/figure.png"):
+    Path(sortie).parent.mkdir(parents=True, exist_ok=True)
     x = list(range(len(df)))
     largeur = 0.4
     plt.figure(figsize=(8, 5))
@@ -50,4 +51,13 @@ def main(chemin_csv, sortie="figures/figure.png"):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser(description="Generate the REM/NREM comparison chart.")
+    parser.add_argument("input_csv", help="Combined analysis CSV")
+    parser.add_argument(
+        "output_png",
+        nargs="?",
+        default="figures/figure.png",
+        help="Output PNG path (default: figures/figure.png)",
+    )
+    args = parser.parse_args()
+    main(args.input_csv, args.output_png)

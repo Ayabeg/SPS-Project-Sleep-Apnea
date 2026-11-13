@@ -104,8 +104,8 @@ Lancer le pipeline complet :
 Le script réalise successivement :
 
 1. Le téléchargement et la vérification SHA256 des fichiers CSV.
-2. Le filtrage des données avec les scripts Bash.
-3. L'analyse des événements respiratoires avec Python.
+2. Le filtrage des données avec le parseur CSV Python appelé par le script Bash.
+3. L'analyse des événements respiratoires sur les fichiers filtrés avec Python.
 4. La génération du graphique comparatif REM/NREM.
 5. L'archivage des résultats et des figures.
 6. L'enregistrement des opérations dans un journal horodaté.
@@ -144,11 +144,20 @@ Après exécution, les fichiers produits comprennent :
 | `logs/run.log` | Journal horodaté des opérations |
 | `archives/` | Archives compressées datées au format `.tar.gz` |
 
+Les fréquences sont calculées à partir d'épisodes contigus dans l'union des
+annotations `Obstructive_Apnea`, `Central_Apnea`, `Hypopnea` et
+`Multiple_Events`. Les compteurs par type sont indépendants et leur somme peut
+donc être supérieure au nombre total d'épisodes uniques lorsqu'une même
+annotation contient plusieurs types. Les horodatages doivent être strictement
+croissants et régulièrement espacés.
+
 ## 8. Administration et reproductibilité
 
 ### Vérification de l'intégrité
 
 Les empreintes SHA256 de référence sont conservées dans `data/checksums/SHA256SUMS`.
+Le script de téléchargement utilise une révision immuable du miroir Hugging
+Face afin que les sommes correspondent à une source déterminée.
 
 Vérification manuelle :
 
