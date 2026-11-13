@@ -1,2 +1,3 @@
-# Exécution du pipeline chaque lundi à 08h00
-0 8 * * 1 cd /home/vboxuser/projects/SPS-Project-Sleep-Apnea && /bin/bash run.sh >> logs/cron.log 2>&1
+# Exécution du pipeline chaque lundi à 08h00.
+# Remplacer /chemin/vers/SPS-Project-Sleep-Apnea par le chemin absolu réel.
+0 8 * * 1 cd "/chemin/vers/SPS-Project-Sleep-Apnea" && /bin/bash "/chemin/vers/SPS-Project-Sleep-Apnea/run.sh" >> "/chemin/vers/SPS-Project-Sleep-Apnea/logs/cron.log" 2>&1

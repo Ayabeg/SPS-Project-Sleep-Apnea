@@ -10,6 +10,12 @@ OUT="results"
 LOGS="logs"
 TMP=$(mktemp -d)
 
+if [[ -x ".venv/bin/python" ]]; then
+    PYTHON=".venv/bin/python"
+else
+    PYTHON="${PYTHON_BIN:-python3}"
+fi
+
 usage() {
     echo "Usage: $0 [-d dossier_csv] [-o dossier_resultats] [-h]"
 }
@@ -91,7 +97,7 @@ for csv in "${files[@]}"; do
     subjects+=("$id")
 done
 
-python3 src/analyse.py \
+"$PYTHON" src/analyse.py \
     --input-dir "$RAW" \
     --subjects "${subjects[@]}" \
     --output-dir "$OUT"
@@ -101,7 +107,7 @@ log "Analyse Python terminée"
 # 5. Génération de la figure
 log "Génération du graphique"
 
-python3 src/figure.py "$OUT/all_subjects_results.csv"
+"$PYTHON" src/figure.py "$OUT/all_subjects_results.csv"
 
 log "Graphique généré"
 

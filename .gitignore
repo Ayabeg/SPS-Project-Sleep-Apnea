@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.venv/
+logs/
+archives/
+data/raw/*.csv
+results/filtered/
+results/S*_results.csv
+results/S*_summary.json

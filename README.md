@@ -10,12 +10,15 @@ Le projet repose sur un pipeline automatisé utilisant Bash pour l'acquisition, 
 
 ## 2. Jeu de données
 
-- **Nom :** DREAMT (PhysioNet)
-- **Source :** [DREAMT — Hugging Face](https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz)
+- **Nom :** DREAMT, jeu de données d'origine PhysioNet
+- **Fichiers utilisés :** [miroir DREAMT sur Hugging Face](https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz)
 - **Sujets sélectionnés :** S002 à S008 (7 sujets)
 - **Volume total :** environ 986 Mo
 - **Format :** CSV
 - **Date de téléchargement :** 23 octobre 2026
+
+Les données brutes ne sont pas incluses dans GitHub. Une connexion Internet et
+environ 1 Go d'espace disque libre sont nécessaires pour les télécharger.
 
 La provenance des données et les contrôles d'intégrité sont détaillés dans [SOURCES.md](SOURCES.md).
 
@@ -34,6 +37,7 @@ SPS-Project-Sleep-Apnea/
 ├── logs/                     # Journaux d'exécution
 ├── archives/                 # Archives compressées datées
 ├── cron/                     # Exemple de planification
+├── .github/workflows/        # Tests automatiques GitHub Actions
 ├── run.sh                    # Script principal
 ├── requirements.txt          # Dépendances Python
 ├── SOURCES.md                # Provenance des données
@@ -48,8 +52,12 @@ Les répertoires de sortie peuvent être créés lors de l'exécution et ne sont
 
 - Linux (Ubuntu recommandé)
 - Bash et outils système : `curl`, `awk`, `sha256sum`, `tar`, `gzip`
-- Python 3, pip et venv
+- Python 3.11 à 3.13, pip et venv
 - cron (pour la planification automatique)
+
+Le pipeline n'est pas prévu pour une exécution native sous Windows. Windows
+peut être utilisé avec WSL ou une machine virtuelle Linux. macOS peut nécessiter
+l'installation d'outils GNU, notamment `sha256sum`.
 
 ### Configuration
 
@@ -67,6 +75,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
+
+`run.sh` utilise automatiquement `.venv/bin/python` lorsqu'il existe. Il est
+donc recommandé d'activer l'environnement virtuel avant l'exécution.
 
 ## 5. Exécution du pipeline
 
@@ -114,6 +125,7 @@ Après exécution, les fichiers produits comprennent :
 | `results/S002_results.csv` à `S008_results.csv` | Résultats individuels par sujet |
 | `results/S002_summary.json` à `S008_summary.json` | Résumés individuels |
 | `results/all_subjects_results.csv` | Tableau récapitulatif des sept sujets |
+| `results/filtered/S002.csv` à `results/filtered/S008.csv` | Données filtrées par sujet |
 | `figures/figure.png` | Graphique comparatif REM/NREM |
 | `logs/run.log` | Journal horodaté des opérations |
 | `archives/` | Archives compressées datées au format `.tar.gz` |
@@ -150,14 +162,14 @@ L'archivage est également intégré à l'exécution standard du pipeline.
 
 ### Planification
 
-Le script `scripts/installer_cron.sh` permet de configurer automatiquement une tâche cron exécutant le pipeline chaque lundi à 08h00.
+Le fichier `cron/pipeline.cron.example` fournit un exemple de tâche cron
+exécutant le pipeline chaque lundi à 08h00. Avant de l'installer, remplacez
+`/chemin/vers/SPS-Project-Sleep-Apnea` par le chemin absolu réel du dépôt.
 
-Il détecte le chemin absolu du projet, vérifie la présence de l'environnement virtuel Python `.venv` et configure la tâche sans nécessiter de modification manuelle des chemins.
-
-Pour installer la planification :
+Pour installer la planification après modification du chemin :
 
 ```bash
-bash scripts/installer_cron.sh
+crontab cron/pipeline.cron.example
 ```
 
 Pour vérifier la tâche installée :
@@ -165,8 +177,6 @@ Pour vérifier la tâche installée :
 ```bash
 crontab -l
 ```
-
-Le fichier `cron/pipeline.cron.example` fournit également un exemple de configuration.
 
 **Remarque :** la tâche planifiée s'exécute uniquement lorsque le système Ubuntu est en fonctionnement.
 
@@ -178,16 +188,17 @@ Les tests automatisés sont exécutés avec pytest :
 python -m pytest -v
 ```
 
-**Résultat de la validation sous Ubuntu, le 11 novembre 2026 :**
+Les tests de syntaxe Bash, les tests Python et un test de l'analyse d'un fichier
+d'exemple sont exécutés automatiquement par GitHub Actions sur Ubuntu avec
+Python 3.11, 3.12 et 3.13. Le pipeline complet nécessite le téléchargement des
+sept fichiers DREAMT et doit être validé séparément sur une machine disposant
+de suffisamment d'espace disque.
 
-- 7 fichiers CSV présents et vérifiés.
-- 7 sujets traités par le filtrage Shell et l'analyse Python.
-- Tableau récapitulatif et graphique générés.
-- Archive compressée datée créée.
-- Journal d'exécution mis à jour.
-- **8 tests automatisés réussis sur 8.**
-- Pipeline terminé sans erreur lors de l'exécution de validation.
+Une validation manuelle a également été effectuée dans un environnement Linux
+avec Python 3.14 : les 7 fichiers ont été téléchargés et vérifiés, les 9 tests
+ont réussi, le pipeline complet a terminé sans erreur et la figure ainsi que
+l'archive des résultats ont été générées.
 
 ## 9. Limites
 
-Les résultats sont descriptifs et dépendent des annotations disponibles dans le dataset. Ils ne permettent pas, à eux seuls, de conclure à une différence statistiquement significative ni d'établir un diagnostic médical.
+Les résultats sont descriptifs et dépendent des annotations disponibles dans le dataset. Ils ne permettent pas, à eux seuls, de conclure à une différence statistiquement significative ni d'établir un diagnostic médical. Ce projet est destiné à l'enseignement et à la recherche, pas à un usage clinique.

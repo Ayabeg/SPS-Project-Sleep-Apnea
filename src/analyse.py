@@ -18,7 +18,16 @@ EVENT_COLUMNS = (
     "Multiple_Events",
 )
 
-REQUIRED_COLUMNS = {"TIMESTAMP", "Sleep_Stage", *EVENT_COLUMNS}
+# ``Multiple_Events`` is present in the raw DREAMT files but is not emitted by
+# the lightweight filtered examples.  The three core event columns are enough
+# to run the analysis, so keep the extra column optional for compatibility.
+REQUIRED_COLUMNS = {
+    "TIMESTAMP",
+    "Sleep_Stage",
+    "Obstructive_Apnea",
+    "Central_Apnea",
+    "Hypopnea",
+}
 
 STAGE_TO_PHASE = {
     "R": "REM",
@@ -131,7 +140,7 @@ def analyze_csv(input_path: Path) -> dict[str, Any]:
 
             current_event_columns: list[str] = []
             for column in EVENT_COLUMNS:
-                value = (row[column] or "").strip()
+                value = (row.get(column) or "").strip()
                 marked = is_marked(value)
                 if marked:
                     current_event_columns.append(column)

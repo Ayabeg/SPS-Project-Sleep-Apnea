@@ -6,7 +6,7 @@ avant de le lancer sur les vrais sujets (plus d'un million de lignes chacun).
 On connaît déjà la bonne réponse pour chaque fichier.
 Si le programme trouve la même réponse, il marche. Sinon, il y a une erreur.
 
-Les trois fichiers ont le même format que les fichiers filtrés (`data/filtered/SXXX_filtre.csv`) :
+Les trois fichiers ont le même format que les fichiers filtrés (`results/filtered/SXXX.csv`) :
 
 ```
 TIMESTAMP,Sleep_Stage,Obstructive_Apnea,Central_Apnea,Hypopnea

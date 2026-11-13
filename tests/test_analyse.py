@@ -38,6 +38,20 @@ def test_analyze_csv_episodes(tmp_path):
     assert rapport["events_per_hour_by_phase"]["NREM"] == 1.0
 
 
+def test_analyze_csv_without_optional_multiple_events(tmp_path):
+    fichier = tmp_path / "sans_multiple_events.csv"
+    fichier.write_text(
+        "TIMESTAMP,Sleep_Stage,Obstructive_Apnea,Central_Apnea,Hypopnea\n"
+        "0,R,1,0,0\n"
+        "1,R,0,0,0\n"
+    )
+
+    rapport = analyze_csv(fichier)
+
+    assert rapport["total_event_episodes_by_phase"] == {"REM": 1, "NREM": 0}
+    assert rapport["event_episode_counts"].get("Multiple_Events", 0) == 0
+
+
 def test_fichier_manquant(tmp_path):
     with pytest.raises(FileNotFoundError):
         analyze_csv(tmp_path / "nexiste_pas.csv")

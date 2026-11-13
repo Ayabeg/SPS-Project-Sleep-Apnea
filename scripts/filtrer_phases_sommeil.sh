@@ -3,7 +3,7 @@
 # Réduit un CSV DREAMT aux 5 colonnes utiles, garde les phases W, N1, N2, N3, R
 # (supprime P et Missing) et convertit les annotations en 0/1.
 # Les lignes W sont gardées pour ne pas coller deux apnées séparées par un réveil.
-# Exemple : bash filtrer_phases_sommeil.sh -f data/raw/S002_whole_df.csv -o data/filtered/S002_filtre.csv
+# Exemple : bash scripts/filtrer_phases_sommeil.sh -f data/raw/S002_whole_df.csv -o results/filtered/S002.csv
 
 set -o pipefail   # une erreur au milieu d'un tube est détectée
 

@@ -1,4 +1,15 @@
+import os
 import sys
+import tempfile
+from pathlib import Path
+
+# Keep Matplotlib's cache out of the user's home directory.  This also makes
+# the pipeline work in read-only or sandboxed environments.
+if not os.environ.get("MPLCONFIGDIR"):
+    matplotlib_cache = Path(tempfile.gettempdir()) / "sps-project-sleep-apnea-matplotlib"
+    matplotlib_cache.mkdir(parents=True, exist_ok=True)
+    os.environ["MPLCONFIGDIR"] = str(matplotlib_cache)
+
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")

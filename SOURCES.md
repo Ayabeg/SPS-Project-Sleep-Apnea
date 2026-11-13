@@ -4,12 +4,15 @@
 
 - **Nom :** DREAMT
 - **Version :** 2.1.0
-- **Source :** PhysioNet
-- **Téléchargement des fichiers CSV :** https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz
+- **Source originale :** PhysioNet
+- **Miroir utilisé pour le téléchargement :** https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz
 - **Date de téléchargement :** 23 octobre 2026
 - **Sujets sélectionnés :** S002 à S008 (7 sujets)
 - **Taille totale :** 986 Mo
 - **Format :** CSV
+
+Le dépôt utilise le miroir Hugging Face pour automatiser le téléchargement,
+tandis que DREAMT est documenté comme le jeu de données d'origine PhysioNet.
 
 ## Description
 
