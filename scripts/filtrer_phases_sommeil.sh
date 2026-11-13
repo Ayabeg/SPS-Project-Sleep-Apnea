@@ -1,22 +1,16 @@
 #!/usr/bin/env bash
-# filtrer_phases_sommeil.sh
-# Réduit un CSV DREAMT aux colonnes utiles, garde les phases W, N1, N2, N3, R
-# (supprime P et Missing) et convertit les annotations en 0/1.
-# Les lignes W sont gardées pour ne pas coller deux apnées séparées par un réveil.
-# Exemple : bash scripts/filtrer_phases_sommeil.sh -f data/raw/S002_whole_df.csv -o results/filtered/S002.csv
-
 set -Eeuo pipefail
 
 fichier=""
 sortie=""
 remplacer=0
+temp=""
 
 aide() {
     echo "Utilisez bash filtrer_phases_sommeil.sh -f fichier.csv -o sortie.csv [-r] [-h]"
     echo ""
     echo "Garde les colonnes TIMESTAMP, Sleep_Stage, Obstructive_Apnea, Central_Apnea, Hypopnea"
-    echo "et les phases W, N1, N2, N3, R (supprime P, Missing et les lignes sans stade)."
-    echo "Conserve Multiple_Events lorsqu'elle existe dans le fichier source."
+    echo "(et Multiple_Events si elle existe) et les phases W, N1, N2, N3, R."
     echo "Les annotations sont converties en 0/1."
     echo ""
     echo "Options :"
@@ -26,131 +20,113 @@ aide() {
     echo "  -h           affiche cette aide"
 }
 
-# Lecture des options
+erreur() {
+    echo "Erreur : $1" >&2
+    exit "${2:-1}"
+}
+
+nettoyer() {
+    if [ -n "$temp" ] && [ -f "$temp" ]; then
+        rm -f "$temp"
+    fi
+}
+
+# Supprime le fichier temporaire en cas derreur ou d'interruption
+trap nettoyer EXIT
+trap 'nettoyer; exit 130' INT TERM
+
 while getopts ":f:o:rh" option; do
     case "$option" in
         f) fichier="$OPTARG" ;;
         o) sortie="$OPTARG" ;;
         r) remplacer=1 ;;
         h) aide; exit 0 ;;
-        :) echo "Erreur : l'option -$OPTARG demande une valeur (voir -h)" >&2; exit 1 ;;
-        \?) echo "Erreur : option invalide -$OPTARG (voir -h)" >&2; exit 1 ;;
+        :) erreur "l'option -$OPTARG demande une valeur (voir -h)" ;;
+        \?) erreur "option invalide -$OPTARG (voir -h)" ;;
     esac
 done
 
-# Vérifications
-if [ -z "$fichier" ] || [ -z "$sortie" ]; then
-    echo "Erreur : il faut -f et -o (voir -h)" >&2
-    exit 1
-fi
-
-if [ ! -f "$fichier" ]; then
-    echo "Erreur : fichier $fichier introuvable" >&2
-    exit 1
-fi
-
+[ -n "$fichier" ] && [ -n "$sortie" ] || erreur "il faut -f et -o (voir -h)"
+[ -f "$fichier" ] || erreur "fichier $fichier introuvable"
+[ -d "$(dirname "$sortie")" ] || erreur "le dossier de destination $(dirname "$sortie") n'existe pas"
 if [ -e "$sortie" ] && [ "$remplacer" -eq 0 ]; then
-    echo "Erreur : $sortie existe déjà (utilisez -r pour le remplacer)" >&2
-    exit 1
+    erreur "$sortie existe déjà (utilisez -r pour le remplacer)"
+fi
+if [ "$(realpath -m "$fichier")" = "$(realpath -m "$sortie")" ]; then
+    erreur "les fichiers d'entrée et de sortie doivent être différents"
 fi
 
-if [ ! -d "$(dirname "$sortie")" ]; then
-    echo "Erreur : le dossier de destination $(dirname "$sortie") n'existe pas" >&2
-    exit 1
-fi
 
-# Use Python's standard-library CSV parser instead of cut/awk.  DREAMT is a
-# CSV dataset, so quoted fields must be handled correctly.  The output is
-# written atomically and preserves Multiple_Events when it exists in the raw
-# file, allowing the filtered file to be the canonical analysis input.
-PYTHON_BIN="${PYTHON_BIN:-python3}"
-command -v "$PYTHON_BIN" >/dev/null || {
-    echo "Erreur : interpréteur Python introuvable : $PYTHON_BIN" >&2
-    exit 1
-}
+CSV_VERS_TSV='
+    NR == 1 { sub("^\357\273\277", "") }
+    index($0, "\"") == 0 { gsub(/,/, "\t"); print; next }
+    {
+        ligne = ""; dedans = 0; n = length($0)
+        for (i = 1; i <= n; i++) {
+            c = substr($0, i, 1)
+            if (c == "\"") {
+                if (dedans && substr($0, i + 1, 1) == "\"") { ligne = ligne "\""; i++ }
+                else dedans = !dedans
+            } else if (c == "," && !dedans) ligne = ligne "\t"
+            else ligne = ligne c
+        }
+        print ligne
+    }'
 
-fichier_abs="$fichier"
-sortie_abs="$sortie"
 
-if "$PYTHON_BIN" - "$fichier_abs" "$sortie_abs" "$remplacer" <<'PY'
-import csv
-import os
-import sys
-import tempfile
-from pathlib import Path
+colonnes=$(head -n 1 "$fichier" | tr -d '\r' | awk "$CSV_VERS_TSV" | awk -F'\t' '
+    {
+        for (i = 1; i <= NF; i++) col[$i] = i
+        n = split("TIMESTAMP Sleep_Stage Obstructive_Apnea Central_Apnea Hypopnea", besoin, " ")
+        liste = ""
+        for (k = 1; k <= n; k++) {
+            if (!(besoin[k] in col)) {
+                print "Erreur : colonne " besoin[k] " absente de l en-tete" > "/dev/stderr"
+                exit 2
+            }
+            liste = liste (k > 1 ? "," : "") col[besoin[k]]
+        }
+        if ("Multiple_Events" in col) liste = liste "," col["Multiple_Events"]
+        print liste
+    }')
 
-source = Path(sys.argv[1]).resolve()
-destination = Path(sys.argv[2]).resolve()
-if source == destination:
-    raise SystemExit("Erreur : les fichiers d'entrée et de sortie doivent être différents")
+#  tr nettoie les \r awk passe en tabulation cut garde les colonnes
+# awk garde les bonnes phases et convertit en 0/1
+temp="$(dirname "$sortie")/.$(basename "$sortie").$$.part"
 
-required = (
-    "TIMESTAMP",
-    "Sleep_Stage",
-    "Obstructive_Apnea",
-    "Central_Apnea",
-    "Hypopnea",
-)
-optional = "Multiple_Events"
-allowed_stages = {"W", "N1", "N2", "N3", "R"}
-false_values = {"", "0", "0.0", "nan", "null", "none", "false"}
+tr -d '\r' < "$fichier" | awk "$CSV_VERS_TSV" | cut -f "$colonnes" | awk -F'\t' -v OFS=',' '
 
-def binary(value: object) -> str:
-    normalized = "" if value is None else str(value).strip().lower()
-    return "0" if normalized in false_values else "1"
+    function binaire(v) {
+        gsub(/ /, "", v)
+        v = tolower(v)
+        if (v == "" || v == "0" || v == "0.0" || v == "nan" || v == "null" || v == "none" || v == "false") return 0
+        return 1
+    }
 
-destination.parent.mkdir(parents=False, exist_ok=True)
-with source.open("r", newline="", encoding="utf-8-sig") as source_handle:
-    reader = csv.DictReader(source_handle, strict=True)
-    fieldnames = reader.fieldnames or []
-    missing = [name for name in required if name not in fieldnames]
-    if missing:
-        raise SystemExit(f"Erreur : colonne(s) absente(s) de l'en-tête : {', '.join(missing)}")
+    NR == 1 {
+        for (i = 1; i <= NF; i++) col[$i] = i
+        multiples = ("Multiple_Events" in col)
+        if (multiples)
+            print "TIMESTAMP", "Sleep_Stage", "Obstructive_Apnea", "Central_Apnea", "Hypopnea", "Multiple_Events"
+        else
+            print "TIMESTAMP", "Sleep_Stage", "Obstructive_Apnea", "Central_Apnea", "Hypopnea"
+        next
+    }
 
-    output_fields = list(required)
-    if optional in fieldnames:
-        output_fields.append(optional)
+    {
+        stade = $col["Sleep_Stage"]
+        gsub(/ /, "", stade)
+        if (stade != "W" && stade != "N1" && stade != "N2" && stade != "N3" && stade != "R") next
+        if (multiples)
+            print $col["TIMESTAMP"], stade, binaire($col["Obstructive_Apnea"]),
+                  binaire($col["Central_Apnea"]), binaire($col["Hypopnea"]), binaire($col["Multiple_Events"])
+        else
+            print $col["TIMESTAMP"], stade, binaire($col["Obstructive_Apnea"]),
+                  binaire($col["Central_Apnea"]), binaire($col["Hypopnea"])
+    }
+' > "$temp"
 
-    temp_name = None
-    rows_written = 0
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            newline="",
-            encoding="utf-8",
-            dir=destination.parent,
-            prefix=f".{destination.name}.",
-            suffix=".part",
-            delete=False,
-        ) as temporary:
-            temp_name = temporary.name
-            writer = csv.DictWriter(temporary, fieldnames=output_fields, lineterminator="\n")
-            writer.writeheader()
-            for row in reader:
-                stage = (row.get("Sleep_Stage") or "").strip()
-                if stage not in allowed_stages:
-                    continue
-                output = {
-                    "TIMESTAMP": row.get("TIMESTAMP", ""),
-                    "Sleep_Stage": stage,
-                    "Obstructive_Apnea": binary(row.get("Obstructive_Apnea")),
-                    "Central_Apnea": binary(row.get("Central_Apnea")),
-                    "Hypopnea": binary(row.get("Hypopnea")),
-                }
-                if optional in output_fields:
-                    output[optional] = binary(row.get(optional))
-                writer.writerow(output)
-                rows_written += 1
-        os.replace(temp_name, destination)
-    except Exception:
-        if temp_name:
-            Path(temp_name).unlink(missing_ok=True)
-        raise
+mv -f "$temp" "$sortie"
+temp=""
 
-print(f"Fichier filtré : {destination} ({rows_written} lignes)")
-PY
-then
-    exit 0
-fi
-
-exit 1
+echo "Fichier filtré : $sortie ($(($(wc -l < "$sortie") - 1)) lignes)"

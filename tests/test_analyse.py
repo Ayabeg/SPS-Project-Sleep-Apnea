@@ -75,7 +75,7 @@ def test_timestamps_irreguliers_refuses(tmp_path):
         + "3,R,0,0,0,0\n"
     )
 
-    with pytest.raises(ValueError, match="régulièrement échantillonnés"):
+    with pytest.raises(ValueError, match="not regularly sampled"):
         analyze_csv(fichier)
 
 
