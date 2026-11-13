@@ -148,6 +148,7 @@ Après exécution, les fichiers produits comprennent :
 | Fichier ou répertoire | Contenu |
 |---|---|
 | `results/S002_results.csv` à `S008_results.csv` | Résultats individuels par sujet |
+| `results/S002_summary.json` à `S008_summary.json` | Résumés détaillés par sujet (lignes par phase, épisodes par type d'événement) |
 | `results/all_subjects_results.csv` | Tableau récapitulatif des sept sujets |
 | `results/filtered/S002.csv` à `results/filtered/S008.csv` | Données filtrées par sujet |
 | `figures/figure.png` | Graphique comparatif REM/NREM |
