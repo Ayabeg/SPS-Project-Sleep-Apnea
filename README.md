@@ -2,54 +2,52 @@
 
 ## 1. Présentation
 
-Ce projet, réalisé dans le cadre du module **Systèmes, Programmation et Scripts (SPS)**, vise à analyser la fréquence des événements respiratoires (apnées et hypopnées) selon les phases du sommeil, notamment REM (sommeil paradoxal) et NREM (sommeil non paradoxal).
+Ce projet étudie la fréquence des événements respiratoires (apnées et hypopnées) selon les phases du sommeil REM (sommeil paradoxal) et NREM (sommeil non paradoxal).
 
-L'objectif est de répondre à la question suivante :
+**Question de recherche :** La fréquence des événements respiratoires varie-t-elle entre les phases REM et NREM ?
 
-**La fréquence des événements respiratoires varie-t-elle entre les phases REM et NREM ?**
-
-Le projet repose sur des scripts Bash pour le traitement et l'automatisation des tâches, ainsi que sur Python pour l'analyse des données et la visualisation des résultats.
+Le projet repose sur un pipeline automatisé utilisant Bash pour l'acquisition, le prétraitement et la gestion des fichiers, ainsi que Python pour l'analyse des données et la visualisation des résultats.
 
 ## 2. Jeu de données
 
 - **Nom :** DREAMT (PhysioNet)
 - **Source :** [DREAMT — Hugging Face](https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz)
 - **Sujets sélectionnés :** S002 à S008 (7 sujets)
-- **Volume total :** 986 Mo
+- **Volume total :** environ 986 Mo
 - **Format :** CSV
 - **Date de téléchargement :** 23 octobre 2026
 
-La provenance des données et les mécanismes de vérification de leur intégrité sont détaillés dans [SOURCES.md](SOURCES.md).
+La provenance des données et les contrôles d'intégrité sont détaillés dans [SOURCES.md](SOURCES.md).
 
 ## 3. Organisation du projet
 
 ```text
 SPS-Project-Sleep-Apnea/
 ├── data/
-│   ├── raw/                # Données brutes
-│   └── checksums/          # Empreintes SHA256
-├── scripts/                # Scripts Bash
-├── src/                    # Scripts Python
-├── tests/                  # Tests automatisés
-├── results/                # Résultats numériques
-├── figures/                # Graphiques
-├── logs/                   # Journaux d'exécution
-├── archives/               # Archives datées
-├── cron/                   # Configuration de la planification
-├── run.sh                  # Script principal
-├── requirements.txt        # Dépendances Python
-├── SOURCES.md              # Provenance des données
-└── README.md               # Documentation du projet
+│   ├── raw/                  # Données CSV brutes
+│   └── checksums/            # Empreintes SHA256
+├── scripts/                  # Scripts Bash
+├── src/                      # Scripts Python
+├── tests/                    # Tests automatisés
+├── results/                  # Résultats numériques
+├── figures/                  # Graphiques
+├── logs/                     # Journaux d'exécution
+├── archives/                 # Archives compressées datées
+├── cron/                     # Exemple de planification
+├── run.sh                    # Script principal
+├── requirements.txt          # Dépendances Python
+├── SOURCES.md                # Provenance des données
+└── README.md                 # Documentation du projet
 ```
 
-Certains répertoires de sortie sont créés lors de l'exécution et peuvent être absents d'un dépôt fraîchement cloné.
+Les répertoires de sortie peuvent être créés lors de l'exécution et ne sont pas nécessairement présents après le clonage.
 
 ## 4. Installation
 
 ### Prérequis
 
 - Linux (Ubuntu recommandé)
-- Bash et outils système (`curl`, `awk`, `sha256sum`, `tar`, `gzip`)
+- Bash et outils système : `curl`, `awk`, `sha256sum`, `tar`, `gzip`
 - Python 3, pip et venv
 - cron (pour la planification automatique)
 
@@ -62,7 +60,7 @@ git clone https://github.com/Ayabeg/SPS-Project-Sleep-Apnea.git
 cd SPS-Project-Sleep-Apnea
 ```
 
-Créer l'environnement virtuel et installer les dépendances :
+Créer et activer l'environnement virtuel, puis installer les dépendances :
 
 ```bash
 python3 -m venv .venv
@@ -70,48 +68,63 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-## 5. Exécution
+## 5. Exécution du pipeline
 
-### Téléchargement des données
+Lancer le pipeline complet :
+
+```bash
+./run.sh
+```
+
+Le script réalise successivement :
+
+1. Le téléchargement et la vérification SHA256 des fichiers CSV.
+2. Le filtrage des données avec les scripts Bash.
+3. L'analyse des événements respiratoires avec Python.
+4. La génération du graphique comparatif REM/NREM.
+5. L'archivage des résultats et des figures.
+6. L'enregistrement des opérations dans un journal horodaté.
+
+Le téléchargement peut également être exécuté séparément :
 
 ```bash
 bash scripts/telecharger_donnees.sh
 ```
 
-Ce script télécharge les fichiers des sept sujets dans `data/raw/`, vérifie leur intégrité à l'aide de SHA256 et réutilise les fichiers déjà présents lorsqu'ils sont valides.
+Les options disponibles pour le script principal sont :
 
-### Lancement du traitement
+| Option | Description |
+|---|---|
+| `-d` | Répertoire contenant les CSV d'entrée |
+| `-o` | Répertoire des résultats |
+| `-h` | Affichage de l'aide |
+
+Exemple avec des chemins explicites :
 
 ```bash
 ./run.sh -d data/raw -o results
 ```
 
-Options disponibles :
-
-| Option | Description |
-|---|---|
-| `-d` | Répertoire des données d'entrée |
-| `-o` | Répertoire de sortie |
-| `-h` | Affichage de l'aide |
-
 ## 6. Résultats
 
-Les sorties du projet sont organisées dans les répertoires suivants :
+Après exécution, les fichiers produits comprennent :
 
-| Répertoire | Contenu |
+| Fichier ou répertoire | Contenu |
 |---|---|
-| `results/` | Résultats des traitements et analyses |
-| `figures/` | Graphiques de comparaison |
-| `logs/` | Journaux d'exécution horodatés |
-| `archives/` | Archives compressées des résultats |
+| `results/S002_results.csv` à `S008_results.csv` | Résultats individuels par sujet |
+| `results/S002_summary.json` à `S008_summary.json` | Résumés individuels |
+| `results/all_subjects_results.csv` | Tableau récapitulatif des sept sujets |
+| `figures/figure.png` | Graphique comparatif REM/NREM |
+| `logs/run.log` | Journal horodaté des opérations |
+| `archives/` | Archives compressées datées au format `.tar.gz` |
 
 ## 7. Administration et reproductibilité
 
 ### Vérification de l'intégrité
 
-Les empreintes SHA256 de référence sont enregistrées dans `data/checksums/SHA256SUMS`.
+Les empreintes SHA256 de référence sont conservées dans `data/checksums/SHA256SUMS`.
 
-Pour vérifier les fichiers téléchargés :
+Vérification manuelle :
 
 ```bash
 (cd data/raw && sha256sum -c ../checksums/SHA256SUMS)
@@ -119,27 +132,45 @@ Pour vérifier les fichiers téléchargés :
 
 ### Permissions
 
-Les fichiers bruts sont placés en lecture seule après leur téléchargement et leur vérification afin de limiter les modifications accidentelles.
+Après téléchargement et vérification, les fichiers CSV bruts sont placés en lecture seule afin de limiter les modifications accidentelles.
 
 ### Journalisation
 
-Les messages d'exécution sont enregistrés dans `logs/run.log`.
+Les opérations du pipeline, notamment les étapes exécutées et les erreurs éventuelles, sont enregistrées dans `logs/run.log`.
 
 ### Archivage
 
-Le script suivant crée une archive compressée et datée des résultats et des figures disponibles :
+Le script suivant permet de créer manuellement une archive compressée et datée des résultats et des figures disponibles :
 
 ```bash
 bash scripts/archiver_resultats.sh
 ```
 
-Les archives sont enregistrées dans `archives/` au format `.tar.gz`.
+L'archivage est également intégré à l'exécution standard du pipeline.
 
 ### Planification
 
-Le fichier `cron/pipeline.cron.example` contient un exemple de planification hebdomadaire, chaque lundi à 08h00.
+Le script `scripts/installer_cron.sh` permet de configurer automatiquement une tâche cron exécutant le pipeline chaque lundi à 08h00.
 
-### Tests
+Il détecte le chemin absolu du projet, vérifie la présence de l'environnement virtuel Python `.venv` et configure la tâche sans nécessiter de modification manuelle des chemins.
+
+Pour installer la planification :
+
+```bash
+bash scripts/installer_cron.sh
+```
+
+Pour vérifier la tâche installée :
+
+```bash
+crontab -l
+```
+
+Le fichier `cron/pipeline.cron.example` fournit également un exemple de configuration.
+
+**Remarque :** la tâche planifiée s'exécute uniquement lorsque le système Ubuntu est en fonctionnement.
+
+## 8. Tests et validation
 
 Les tests automatisés sont exécutés avec pytest :
 
@@ -147,6 +178,16 @@ Les tests automatisés sont exécutés avec pytest :
 python -m pytest -v
 ```
 
-## 8. Limites
+**Résultat de la validation sous Ubuntu, le 11 novembre 2026 :**
 
-Cette analyse est exploratoire et ne constitue pas un outil de diagnostic médical.
+- 7 fichiers CSV présents et vérifiés.
+- 7 sujets traités par le filtrage Shell et l'analyse Python.
+- Tableau récapitulatif et graphique générés.
+- Archive compressée datée créée.
+- Journal d'exécution mis à jour.
+- **8 tests automatisés réussis sur 8.**
+- Pipeline terminé sans erreur lors de l'exécution de validation.
+
+## 9. Limites
+
+Les résultats sont descriptifs et dépendent des annotations disponibles dans le dataset. Ils ne permettent pas, à eux seuls, de conclure à une différence statistiquement significative ni d'établir un diagnostic médical.
