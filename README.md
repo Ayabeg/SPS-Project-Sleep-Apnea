@@ -10,7 +10,7 @@ Le projet repose sur un pipeline automatisé utilisant Bash pour l'acquisition, 
 
 ## 2. Jeu de données
 
-- **Nom :** DREAMT, jeu de données d'origine PhysioNet
+- **Nom :** DREAMT (Hugging Face), jeu de données d'origine PhysioNet
 - **Fichiers utilisés :** [miroir DREAMT sur Hugging Face](https://huggingface.co/datasets/bsaenz/dreamt/tree/main/data_64Hz)
 - **Sujets sélectionnés :** S002 à S008 (7 sujets)
 - **Volume total :** environ 986 Mo
