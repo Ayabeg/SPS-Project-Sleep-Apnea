@@ -58,7 +58,7 @@ dépôt. Les noms officiels peuvent être ajustés par le groupe avant la remise
 | kenzbn | Téléchargement et filtrage des données avec les scripts Bash |
 | aminabenzerga819-commits | Génération de la figure et tests associés |
 | Besma Hamzaoui (`besmahmz` / `vboxuser`) | Documentation, sources, intégration des chemins, archivage et validation |
-| Ayabeg| Corrections finales de portabilité, tests et intégration CI |
+
 
 ## 5. Installation
 
