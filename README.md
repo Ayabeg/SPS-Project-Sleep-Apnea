@@ -150,9 +150,25 @@ L'archivage est également intégré à l'exécution standard du pipeline.
 
 ### Planification
 
-Le fichier `cron/pipeline.cron.example` fournit un exemple d'exécution hebdomadaire, chaque lundi à 08h00.
+Le script `scripts/installer_cron.sh` permet de configurer automatiquement une tâche cron exécutant le pipeline chaque lundi à 08h00.
 
-La tâche doit être configurée avec les chemins correspondant à l'environnement utilisé avant son activation.
+Il détecte le chemin absolu du projet, vérifie la présence de l'environnement virtuel Python `.venv` et configure la tâche sans nécessiter de modification manuelle des chemins.
+
+Pour installer la planification :
+
+```bash
+bash scripts/installer_cron.sh
+```
+
+Pour vérifier la tâche installée :
+
+```bash
+crontab -l
+```
+
+Le fichier `cron/pipeline.cron.example` fournit également un exemple de configuration.
+
+**Remarque :** la tâche planifiée s'exécute uniquement lorsque le système Ubuntu est en fonctionnement.
 
 ## 8. Tests et validation
 
