@@ -46,7 +46,21 @@ SPS-Project-Sleep-Apnea/
 
 Les répertoires de sortie peuvent être créés lors de l'exécution et ne sont pas nécessairement présents après le clonage.
 
-## 4. Installation
+## 4. Répartition du travail
+
+La répartition ci-dessous est basée sur l'historique des contributions Git du
+dépôt. Les noms officiels peuvent être ajustés par le groupe avant la remise.
+
+| Contributeur | Travail principal |
+|---|---|
+| Ayabeg | Création et coordination du dépôt GitHub |
+| linadd2000-star | Première version du script principal `run.sh` |
+| kenzbn | Téléchargement et filtrage des données avec les scripts Bash |
+| aminabenzerga819-commits | Génération de la figure et tests associés |
+| Besma Hamzaoui (`besmahmz` / `vboxuser`) | Documentation, sources, intégration des chemins, archivage et validation |
+| Mohamed Beghanem | Corrections finales de portabilité, tests et intégration CI |
+
+## 5. Installation
 
 ### Prérequis
 
@@ -79,7 +93,7 @@ python -m pip install -r requirements.txt
 `run.sh` utilise automatiquement `.venv/bin/python` lorsqu'il existe. Il est
 donc recommandé d'activer l'environnement virtuel avant l'exécution.
 
-## 5. Exécution du pipeline
+## 6. Exécution du pipeline
 
 Lancer le pipeline complet :
 
@@ -116,7 +130,7 @@ Exemple avec des chemins explicites :
 ./run.sh -d data/raw -o results
 ```
 
-## 6. Résultats
+## 7. Résultats
 
 Après exécution, les fichiers produits comprennent :
 
@@ -130,7 +144,7 @@ Après exécution, les fichiers produits comprennent :
 | `logs/run.log` | Journal horodaté des opérations |
 | `archives/` | Archives compressées datées au format `.tar.gz` |
 
-## 7. Administration et reproductibilité
+## 8. Administration et reproductibilité
 
 ### Vérification de l'intégrité
 
@@ -180,7 +194,7 @@ crontab -l
 
 **Remarque :** la tâche planifiée s'exécute uniquement lorsque le système Ubuntu est en fonctionnement.
 
-## 8. Tests et validation
+## 9. Tests et validation
 
 Les tests automatisés sont exécutés avec pytest :
 
@@ -199,6 +213,6 @@ avec Python 3.14 : les 7 fichiers ont été téléchargés et vérifiés, les 9 
 ont réussi, le pipeline complet a terminé sans erreur et la figure ainsi que
 l'archive des résultats ont été générées.
 
-## 9. Limites
+## 10. Limites
 
 Les résultats sont descriptifs et dépendent des annotations disponibles dans le dataset. Ils ne permettent pas, à eux seuls, de conclure à une différence statistiquement significative ni d'établir un diagnostic médical. Ce projet est destiné à l'enseignement et à la recherche, pas à un usage clinique.
